@@ -1,5 +1,5 @@
 //
-//  HomeCell.swift
+//  CommentCell.swift
 //  FirebaseInstagram
 //
 //  Created by Binh Huynh on 1/19/19.

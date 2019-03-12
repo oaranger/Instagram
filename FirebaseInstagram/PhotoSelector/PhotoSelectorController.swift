@@ -13,21 +13,19 @@ class PhotoSelectorController: UICollectionViewController, UICollectionViewDeleg
     
     let cellId = "cellId"
     let headerId = "headerId"
+    var images = [UIImage]()
+    var selectedImage: UIImage?
+    var assets = [PHAsset]()
+    var header: PhotoSelectorHeader?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         collectionView?.backgroundColor = .white
         setupNavigationButtons()
-        
         collectionView?.register(PhotoSelectorCell.self, forCellWithReuseIdentifier: cellId)
         collectionView?.register(PhotoSelectorHeader.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: headerId)
-        
         fetchPhotos()
     }
-    
-    var images = [UIImage]()
-    var selectedImage: UIImage?
-    var assets = [PHAsset]()
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         self.selectedImage = images[indexPath.item]
@@ -38,7 +36,7 @@ class PhotoSelectorController: UICollectionViewController, UICollectionViewDeleg
     
     fileprivate func assetFetchOptions() -> PHFetchOptions {
         let fetchOptions = PHFetchOptions()
-        fetchOptions.fetchLimit = 30
+        fetchOptions.fetchLimit = 200
         let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: false)
         fetchOptions.sortDescriptors = [sortDescriptor]
         return fetchOptions
@@ -54,7 +52,6 @@ class PhotoSelectorController: UICollectionViewController, UICollectionViewDeleg
                 let options = PHImageRequestOptions()
                 options.isSynchronous = true
                 imageManager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFit, options: options, resultHandler: { (image, info) in
-                    print(image)
                     if let image = image {
                         self.images.append(image)
                         self.assets.append(asset)
@@ -71,17 +68,12 @@ class PhotoSelectorController: UICollectionViewController, UICollectionViewDeleg
                 })
             }
         }
-        
     }
-    
-    var header: PhotoSelectorHeader?
-    
+
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         
         let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: headerId, for: indexPath) as! PhotoSelectorHeader
-        
         self.header = header
-        
         header.photoImageView.image = selectedImage
         if let selectedImage = selectedImage {
             if let index = self.images.firstIndex(of: selectedImage) {
@@ -92,7 +84,6 @@ class PhotoSelectorController: UICollectionViewController, UICollectionViewDeleg
                 }
             }
         }
-        
         return header
     }
     
@@ -108,7 +99,6 @@ class PhotoSelectorController: UICollectionViewController, UICollectionViewDeleg
     fileprivate func setupNavigationButtons() {
         navigationController?.navigationBar.tintColor = .black
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(handleCancel))
-        
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Next", style: .plain, target: self, action: #selector(handleNext))
     }
     
@@ -124,8 +114,7 @@ class PhotoSelectorController: UICollectionViewController, UICollectionViewDeleg
         print("next")
         let sharePhotoController = SharePhotoController()
         sharePhotoController.selectedImage = self.header?.photoImageView.image
-        navigationController?.pushViewController(sharePhotoController, animated: true)
-        
+        navigationController?.pushViewController(sharePhotoController, animated: true)        
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {

@@ -10,6 +10,7 @@ import UIKit
 
 class UserProfilePhotoCell: UICollectionViewCell {
     
+
     var post: Post? {
         didSet {
             guard let imageUrl = post?.imageUrl else { return }
@@ -21,7 +22,6 @@ class UserProfilePhotoCell: UICollectionViewCell {
         let iv = CustomImageView()
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
-        iv.backgroundColor = .red
         return iv
     }()
     

@@ -9,13 +9,78 @@
 import UIKit
 import Firebase
 
+protocol UserProfileHeaderDelegate {
+    func didChangeToListView()
+    func didChangeToGridView()
+}
+
 class UserProfileHeader: UICollectionViewCell {
+    
+    var delegate: UserProfileHeaderDelegate?
     
     var user: User? {
         didSet {
             guard let profileImageUrl = user?.profileImageUrl else { return }
             profileImageView.loadImage(urlString: profileImageUrl)
             usernameLabel.text = self.user?.username
+            setupEditFollowButton()
+        }
+    }
+    
+    fileprivate func setupEditFollowButton() {
+        guard let currentLoggedInUserId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = user?.uid else { return }
+        
+        if currentLoggedInUserId == userId {
+            // edit profile
+        } else {
+            // check if following
+        Database.database().reference().child("following").child(currentLoggedInUserId).child(userId).observeSingleEvent(of: .value, with: { (snapshot) in
+                if let isFollowing = snapshot.value as? Int, isFollowing == 1 {
+                    self.editProfileFollowButton.setTitle("Unfollow", for: .normal)
+                } else {
+                    self.setupFollowStyle()
+            }
+            }) { (error) in
+                print("Failed to check if following", error)
+            }
+        }
+    }
+    
+    fileprivate func setupFollowStyle() {
+        self.editProfileFollowButton.setTitle("Follow", for: .normal)
+        self.editProfileFollowButton.backgroundColor = UIColor.rgb(17, 154, 237)
+        self.editProfileFollowButton.setTitleColor(.white, for: .normal)
+        self.editProfileFollowButton.layer.borderColor = UIColor(white: 0, alpha: 0.2).cgColor
+    }
+    
+    @objc func handleEditProfileOrFollow() {
+        print("Execute edit profile / follow / unfollow logic")
+        guard let currentLoggedInUserId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = user?.uid else { return }
+        
+        if editProfileFollowButton.titleLabel?.text == "Unfollow" {
+        Database.database().reference().child("following").child(currentLoggedInUserId).child(userId).removeValue { (error, ref) in
+            if let error = error {
+                print("Failed to unfollow user", error)
+                return
+            }
+            print("Successfully unfollowed user", self.user?.username ?? "")
+            self.setupFollowStyle()
+        }
+        } else {
+            let ref = Database.database().reference().child("following").child(currentLoggedInUserId)
+            let values = [userId: 1]
+            ref.updateChildValues(values) { (error, ref) in
+                if let error = error {
+                    print("Failed to follow user:", error)
+                    return
+                }
+                print("Successfully followed user:",self.user?.username ?? "")
+                self.editProfileFollowButton.setTitle("Unfollow", for: .normal)
+                self.editProfileFollowButton.backgroundColor = .white
+                self.editProfileFollowButton.setTitleColor(.black, for: .normal)
+            }
         }
     }
     
@@ -24,18 +89,34 @@ class UserProfileHeader: UICollectionViewCell {
         return iv
     }()
     
-    let gridButton: UIButton = {
-        let button = UIButton(type: UIButton.ButtonType.system)
+    lazy var gridButton: UIButton = {
+        let button = UIButton(type: .system)
         button.setImage(#imageLiteral(resourceName: "grid"), for: .normal)
+        button.addTarget(self, action: #selector(handleChangeToGridView), for: .touchUpInside)
         return button
     }()
     
-    let listButton: UIButton = {
+    @objc func handleChangeToGridView() {
+        print("Changing to grid view")
+        gridButton.tintColor = .mainBlue()
+        listButton.tintColor = UIColor(white: 0, alpha: 0.2)
+        delegate?.didChangeToGridView()
+    }
+    
+    lazy var listButton: UIButton = {
         let button = UIButton(type: UIButton.ButtonType.system)
         button.setImage(#imageLiteral(resourceName: "list"), for: .normal)
         button.tintColor = UIColor(white: 0, alpha: 0.2)
+        button.addTarget(self, action: #selector(handleListView), for: .touchUpInside)
         return button
     }()
+    
+    @objc func handleListView() {
+        print("Handling list view...")
+        listButton.tintColor = UIColor.mainBlue()
+        gridButton.tintColor = UIColor(white: 0, alpha: 0.2)
+        delegate?.didChangeToListView()
+    }
     
     let bookmarkButton: UIButton = {
         let button = UIButton(type: UIButton.ButtonType.system)
@@ -93,7 +174,7 @@ class UserProfileHeader: UICollectionViewCell {
         return label
     }()
     
-    let editProfileButton: UIButton = {
+    lazy var editProfileFollowButton: UIButton = {
        let button = UIButton(type: UIButton.ButtonType.system)
         button.setTitle("Edit Profile", for: .normal)
         button.setTitleColor(.black, for: .normal)
@@ -101,12 +182,12 @@ class UserProfileHeader: UICollectionViewCell {
         button.layer.borderColor = UIColor.lightGray.cgColor
         button.layer.borderWidth = 1
         button.layer.cornerRadius = 3
+        button.addTarget(self, action: #selector(handleEditProfileOrFollow), for: .touchUpInside)
         return button
     }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-//        backgroundColor = .blue
         addSubview(profileImageView)
         profileImageView.anchor(top: topAnchor, left: self.leftAnchor, bottom: nil, right: nil, paddingTop: 12, paddingLeft: 12, paddingBottom: 0, paddingRight: 0, widtth: 80, height: 80)
         profileImageView.layer.cornerRadius = 80 / 2
@@ -119,8 +200,8 @@ class UserProfileHeader: UICollectionViewCell {
         
         setupStatsView()
         
-        addSubview(editProfileButton)
-        editProfileButton.anchor(top: postsLabel.bottomAnchor, left: postsLabel.leftAnchor, bottom: nil, right: followingsLabel.rightAnchor, paddingTop: 2, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, widtth: 0, height: 34)
+        addSubview(editProfileFollowButton)
+        editProfileFollowButton.anchor(top: postsLabel.bottomAnchor, left: postsLabel.leftAnchor, bottom: nil, right: followingsLabel.rightAnchor, paddingTop: 2, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, widtth: 0, height: 34)
     }
     
     fileprivate func setupStatsView() {

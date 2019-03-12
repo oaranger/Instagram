@@ -6,4 +6,15 @@
 //  Copyright © 2019 Binh Huynh. All rights reserved.
 //
 
-import Foundation
+import UIKit
+
+struct Comment {
+    let text: String
+    let uid: String
+    var user: User
+    init(user: User, dictionary: [String: Any]) {
+        self.user = user
+        self.text = dictionary["text"] as? String ?? ""
+        self.uid = dictionary["uid"] as? String ?? ""
+    }
+}

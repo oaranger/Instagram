@@ -11,9 +11,10 @@ import Firebase
 
 class SharePhotoController: UIViewController {
     
+    static let updateFeedNotificationName = NSNotification.Name(rawValue: "UpdateFeed")
+    
     var selectedImage: UIImage? {
         didSet {
-            print(selectedImage)
             imageView.image = selectedImage
         }
     }
@@ -55,6 +56,8 @@ class SharePhotoController: UIViewController {
             }
             print("Successfully saved post to DB")
             self.dismiss(animated: true, completion: nil)
+
+            NotificationCenter.default.post(name: SharePhotoController.updateFeedNotificationName, object: nil)
         }
     }
     
@@ -85,12 +88,10 @@ class SharePhotoController: UIViewController {
             })
             
         }
-        
     }
     
     let imageView: UIImageView = {
        let iv = UIImageView()
-        iv.backgroundColor = .red
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
         return iv

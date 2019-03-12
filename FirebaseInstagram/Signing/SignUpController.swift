@@ -8,6 +8,7 @@
 
 import UIKit
 import Firebase
+import FirebaseMessaging
 
 class SignUpController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -131,7 +132,8 @@ class SignUpController: UIViewController, UIImagePickerControllerDelegate, UINav
                         print("Successfully uploaded profile image", profileImageUrl)
                         
                         guard let uid = user?.user.uid else { return }
-                        let dictionaryValues = ["username": username, "profileImage": profileImageUrl]
+                        guard let fcmToken = Messaging.messaging().fcmToken else { return }
+                        let dictionaryValues = ["username": username, "profileImage": profileImageUrl, "fcmToken": fcmToken]
                         let values = [uid: dictionaryValues]
                         Database.database().reference().child("users").updateChildValues(values, withCompletionBlock: { (error, reference) in
                             if let error = error {
@@ -192,7 +194,15 @@ class SignUpController: UIViewController, UIImagePickerControllerDelegate, UINav
         plusPhotoButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         plusPhotoButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40).isActive = true
         
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTapToDismissKeyboard))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)    
+        
         setupInputFields()
+    }
+    
+    @objc func handleTapToDismissKeyboard() {
+        view.endEditing(true)
     }
     
     fileprivate func setupInputFields() {

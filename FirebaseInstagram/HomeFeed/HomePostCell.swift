@@ -8,8 +8,15 @@
 
 import UIKit
 
+protocol HomePostCellDelegate {
+    func didTapComment(post: Post)
+    func didLike(for cell: HomePostCell)
+}
+
 
 class HomePostCell: UICollectionViewCell {
+    
+    var delegate: HomePostCellDelegate?
     
     var post: Post? {
         didSet {
@@ -21,9 +28,9 @@ class HomePostCell: UICollectionViewCell {
             guard let profileImageUrl = post?.user.profileImageUrl else { return }
             userProfileImageView.loadImage(urlString: profileImageUrl)
             
-//            captionLabel.text = post?.caption
-            setupAttributedCaption()
+            likeButton.setImage(post?.hasLike == true ? #imageLiteral(resourceName: "like_selected").withRenderingMode(.alwaysOriginal) : #imageLiteral(resourceName: "like_unselected").withRenderingMode(.alwaysOriginal) , for: .normal)
             
+            setupAttributedCaption()
         }
     }
     
@@ -37,7 +44,8 @@ class HomePostCell: UICollectionViewCell {
         
         attributedText.append(NSAttributedString(string: "\n\n", attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14)]))
         
-        attributedText.append(NSAttributedString(string: "week ago", attributes: [NSMutableAttributedString.Key.font: UIFont.systemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor.gray]))
+        let timeAgoDisplay = post.creationDate.timeAgoDisplay()        
+        attributedText.append(NSAttributedString(string: timeAgoDisplay, attributes: [NSMutableAttributedString.Key.font: UIFont.systemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor.gray]))
         
         captionLabel.attributedText = attributedText
     }
@@ -70,17 +78,30 @@ class HomePostCell: UICollectionViewCell {
         return button
     }()
     
-    let likeButton: UIButton = {
+    lazy var likeButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(#imageLiteral(resourceName: "like_unselected").withRenderingMode(.alwaysOriginal), for: .normal)
+        button.addTarget(self, action: #selector(handleLike), for: .touchUpInside)
         return button
     }()
     
-    let commentButton: UIButton = {
+    @objc func handleLike() {
+        print("Handling like...")
+        delegate?.didLike(for: self)
+    }
+    
+    lazy var commentButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(#imageLiteral(resourceName: "comment").withRenderingMode(.alwaysOriginal), for: .normal)
+        button.addTarget(self, action: #selector(handleComment), for: .touchUpInside)
         return button
     }()
+    
+    @objc func handleComment() {
+        print("Trying to show comment...")
+        guard let post = post else { return }
+        delegate?.didTapComment(post: post)
+    }
     
     let sendMessageButton: UIButton = {
         let button = UIButton(type: .system)
@@ -97,7 +118,6 @@ class HomePostCell: UICollectionViewCell {
     let captionLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
-//        label.attributedText = attributedText
         return label
     }()
     
@@ -140,7 +160,4 @@ class HomePostCell: UICollectionViewCell {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    
-    
 }

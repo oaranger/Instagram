@@ -12,10 +12,8 @@ import Firebase
 class LoginController: UIViewController {
     
     let logoContainerView: UIView = {
-       let view = UIView()
-
+        let view = UIView()
         let logoImageView = UIImageView(image: #imageLiteral(resourceName: "Instagram_logo_white"))
-//        logoImageView.backgroundColor = .red
         view.addSubview(logoImageView)
         logoImageView.anchor(top: nil, left: nil, bottom: nil, right: nil, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, widtth: 200, height: 50)
         logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
@@ -31,10 +29,8 @@ class LoginController: UIViewController {
         tf.backgroundColor = UIColor(white: 0, alpha: 0.03)
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
-        tf.translatesAutoresizingMaskIntoConstraints = false
-        
+        tf.translatesAutoresizingMaskIntoConstraints = false        
         tf.addTarget(self, action: #selector(handleTextInputChange), for: .editingChanged)
-        
         return tf
     }()
     
@@ -45,9 +41,7 @@ class LoginController: UIViewController {
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
         tf.translatesAutoresizingMaskIntoConstraints = false
-        
         tf.addTarget(self, action: #selector(handleTextInputChange), for: .editingChanged)
-        
         return tf
     }()
     
@@ -60,7 +54,6 @@ class LoginController: UIViewController {
         button.setTitleColor(.white, for: .normal)
         button.addTarget(self, action: #selector(handleLogin), for: .touchUpInside)
         button.isEnabled = false
-        
         return button
     }()
     
@@ -73,18 +66,14 @@ class LoginController: UIViewController {
                 return
             }
             print("Successfully logged back in with user", authData?.user.uid ?? "")
-            
             guard let mainTabBarController = UIApplication.shared.keyWindow?.rootViewController as? MainTabBarController else { return }
             mainTabBarController.setupViewControllers()
-            
             self.dismiss(animated: true, completion: nil)
         }
     }
 
     @objc func handleTextInputChange() {
-        let isEmailValid = emailTextField.text?.count ?? 0 > 0
-            && passwordTextField.text?.count ?? 0 > 0
-        
+        let isEmailValid = emailTextField.text?.count ?? 0 > 0 && passwordTextField.text?.count ?? 0 > 0
         if isEmailValid {
             LoginButton.isEnabled = true
             LoginButton.backgroundColor = UIColor.rgb(17, 154, 237)
@@ -118,11 +107,16 @@ class LoginController: UIViewController {
         navigationController?.isNavigationBarHidden = true
         view.addSubview(dontHaveAccountButton)
         dontHaveAccountButton.anchor(top: nil, left: view.leftAnchor, bottom: view.bottomAnchor, right: view.rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, widtth: 0, height: 50)
-        
         view.addSubview(logoContainerView)
         logoContainerView.anchor(top: view.topAnchor, left: view.leftAnchor, bottom: nil, right: view.rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, widtth: 0, height: 150)
-        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTapToDimissKeyboard))
+        tap.cancelsTouchesInView =  false
+        view.addGestureRecognizer(tap)        
         setupInputFields()
+    }
+    
+    @objc func handleTapToDimissKeyboard() {
+        view.endEditing(true)
     }
     
     fileprivate func setupInputFields() {
